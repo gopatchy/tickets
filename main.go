@@ -21,7 +21,8 @@ var (
 )
 
 func init() {
-	templates = template.Must(template.ParseGlob("static/*.html"))
+	templates = template.Must(template.New("").ParseGlob("static/*.html"))
+	template.Must(templates.ParseGlob("static/*.js"))
 
 	var err error
 	db, err = sql.Open("postgres", os.Getenv("PGCONN"))
@@ -63,13 +64,17 @@ func handleStatic(w http.ResponseWriter, r *http.Request) {
 
 	name := strings.TrimPrefix(path, "/")
 
-	if strings.HasSuffix(name, ".html") {
+	if strings.HasSuffix(name, ".html") || strings.HasSuffix(name, ".js") {
 		t := templates.Lookup(name)
 		if t == nil {
 			http.NotFound(w, r)
 			return
 		}
-		w.Header().Set("Content-Type", "text/html")
+		if strings.HasSuffix(name, ".html") {
+			w.Header().Set("Content-Type", "text/html")
+		} else {
+			w.Header().Set("Content-Type", "application/javascript")
+		}
 		t.Execute(w, templateData())
 		return
 	}

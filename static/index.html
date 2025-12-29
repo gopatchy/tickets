@@ -31,79 +31,29 @@
     </style>
 </head>
 <body style="opacity: 0">
-    <div id="signin">
-        <div id="g_id_onload"
-            data-client_id="{{.env.GOOGLE_CLIENT_ID}}"
-            data-callback="handleCredentialResponse"
-            data-use_fedcm_for_button="true"
-            data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin"
-            data-type="standard"
-            data-size="large"
-            data-theme="outline"
-            data-text="sign_in_with"
-            data-shape="rectangular"
-            data-logo_alignment="left">
-        </div>
-    </div>
+    <div id="signin"></div>
     <wa-card id="welcome">
         <div class="profile" slot="header">
-            <img id="profile-picture" src="" alt="Profile">
+            <img data-bind="picture" alt="Profile">
             <div>
-                <div><strong id="profile-name"></strong></div>
-                <div id="profile-email"></div>
+                <div><strong data-bind="name"></strong></div>
+                <div data-bind="email"></div>
             </div>
         </div>
         <p>Welcome to HCA Tickets!</p>
-        <wa-button variant="neutral" onclick="logout()">Switch User</wa-button>
+        <wa-button variant="neutral" id="logout-btn">Switch User</wa-button>
     </wa-card>
-    <script>
-        function getProfile() {
-            const data = localStorage.getItem('profile');
-            return data ? JSON.parse(data) : null;
-        }
-
-        function setProfile(profile) {
-            localStorage.setItem('profile', JSON.stringify(profile));
-        }
-
-        function logout() {
-            localStorage.removeItem('profile');
-            location.reload();
-        }
-
-        async function handleCredentialResponse(response) {
-            const res = await fetch('/auth/google/callback', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'credential=' + encodeURIComponent(response.credential)
-            });
-            const profile = await res.json();
-            setProfile(profile);
-            render();
-        }
-
-        function render() {
-            const profile = getProfile();
-            if (profile) {
-                document.getElementById('profile-picture').src = profile.picture;
-                document.getElementById('profile-name').textContent = profile.name;
-                document.getElementById('profile-email').textContent = profile.email;
-                document.getElementById('signin').style.display = 'none';
-                document.getElementById('welcome').style.display = 'block';
-            } else {
-                document.getElementById('signin').style.display = 'block';
-                document.getElementById('welcome').style.display = 'none';
-            }
-        }
-
-        render();
-    </script>
     <script type="module">
+        import { auth, logout } from '/app.js';
+
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             document.documentElement.className = e.matches ? 'wa-dark' : 'wa-light';
         });
+
+        await auth();
+        document.getElementById('welcome').style.display = 'block';
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
         await customElements.whenDefined('wa-card');
         document.body.style.opacity = 1;
     </script>
