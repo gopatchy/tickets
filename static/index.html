@@ -4,42 +4,38 @@
     <script>document.documentElement.className = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'wa-dark' : 'wa-light';</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tickets App</title>
+    <title>HCA Tickets</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3/dist-cdn/styles/themes/default.css">
     <script type="module" src="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3/dist-cdn/webawesome.loader.js"></script>
     <script src="https://accounts.google.com/gsi/client" async></script>
     <style>
         body {
-            font-family: var(--wa-font-sans);
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
         }
     </style>
 </head>
 <body style="opacity: 0">
-    <wa-card>
-        <h1 slot="header">Hello World</h1>
-        <p>Welcome to the Tickets App!</p>
-        <div id="g_id_onload"
-            data-client_id="{{.GOOGLE_CLIENT_ID}}"
-            data-login_uri="/auth/google/callback"
-            data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin"
-            data-type="standard"
-            data-size="large"
-            data-theme="outline"
-            data-text="sign_in_with"
-            data-shape="rectangular"
-            data-logo_alignment="left">
-        </div>
-    </wa-card>
+    <div id="g_id_onload"
+        data-client_id="{{index . "GOOGLE_CLIENT_ID"}}"
+        data-login_uri="/auth/google/callback"
+        data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+        data-type="standard"
+        data-size="large"
+        data-theme="outline"
+        data-text="sign_in_with"
+        data-shape="rectangular"
+        data-logo_alignment="left">
+    </div>
     <script type="module">
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             document.documentElement.className = e.matches ? 'wa-dark' : 'wa-light';
         });
-        await customElements.whenDefined('wa-card');
         document.body.style.opacity = 1;
     </script>
 </body>

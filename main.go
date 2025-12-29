@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"html/template"
@@ -14,26 +13,9 @@ import (
 	"google.golang.org/api/idtoken"
 )
 
-var (
-	env       = map[string]string{}
-	templates *template.Template
-)
+var templates *template.Template
 
 func init() {
-	f, err := os.Open("secrets.env")
-	if err != nil {
-		log.Fatal("[ERROR] failed to open secrets.env: ", err)
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if parts := strings.SplitN(line, "=", 2); len(parts) == 2 {
-			env[parts[0]] = parts[1]
-		}
-	}
-
 	templates = template.Must(template.ParseGlob("static/*.html"))
 }
 
@@ -60,11 +42,21 @@ func handleStatic(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html")
-		t.Execute(w, env)
+		t.Execute(w, envMap())
 		return
 	}
 
 	http.ServeFile(w, r, filepath.Join("static", name))
+}
+
+func envMap() map[string]string {
+	m := map[string]string{}
+	for _, e := range os.Environ() {
+		if parts := strings.SplitN(e, "=", 2); len(parts) == 2 {
+			m[parts[0]] = parts[1]
+		}
+	}
+	return m
 }
 
 func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +71,7 @@ func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := idtoken.Validate(context.Background(), credential, env["GOOGLE_CLIENT_ID"])
+	payload, err := idtoken.Validate(context.Background(), credential, os.Getenv("GOOGLE_CLIENT_ID"))
 	if err != nil {
 		log.Println("[ERROR] failed to validate token:", err)
 		http.Error(w, "invalid token", http.StatusUnauthorized)
