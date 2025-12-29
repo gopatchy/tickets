@@ -20,8 +20,10 @@
 </head>
 <body style="opacity: 0">
     <div id="g_id_onload"
-        data-client_id="{{index . "GOOGLE_CLIENT_ID"}}"
+        data-client_id="{{.GOOGLE_CLIENT_ID}}"
         data-login_uri="/auth/google/callback"
+        data-ux_mode="redirect"
+        data-use_fedcm_for_button="true"
         data-auto_prompt="false">
     </div>
     <div class="g_id_signin"
