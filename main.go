@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"html/template"
 	"log"
@@ -51,6 +54,7 @@ func init() {
 func main() {
 	http.HandleFunc("/", handleStatic)
 	http.HandleFunc("/auth/google/callback", handleGoogleCallback)
+	http.HandleFunc("/api/rsvp/", handleRSVP)
 
 	log.Println("server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -117,12 +121,100 @@ func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	email := payload.Claims["email"].(string)
+
 	profile := map[string]any{
-		"email":   payload.Claims["email"],
+		"email":   email,
 		"name":    payload.Claims["name"],
 		"picture": payload.Claims["picture"],
+		"token":   signEmail(email),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(profile)
+}
+
+func signEmail(email string) string {
+	h := hmac.New(sha256.New, []byte(os.Getenv("TOKEN_SECRET")))
+	h.Write([]byte(email))
+	sig := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	return base64.RawURLEncoding.EncodeToString([]byte(email)) + "." + sig
+}
+
+func verifyToken(token string) (string, bool) {
+	parts := strings.SplitN(token, ".", 2)
+	if len(parts) != 2 {
+		return "", false
+	}
+	emailBytes, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return "", false
+	}
+	email := string(emailBytes)
+	if signEmail(email) != token {
+		return "", false
+	}
+	return email, true
+}
+
+func handleRSVP(w http.ResponseWriter, r *http.Request) {
+	eventID := strings.TrimPrefix(r.URL.Path, "/api/rsvp/")
+	if eventID == "" {
+		http.Error(w, "missing event id", http.StatusBadRequest)
+		return
+	}
+
+	token := r.Header.Get("Authorization")
+	email, ok := verifyToken(strings.TrimPrefix(token, "Bearer "))
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		var numPeople int
+		var totalPeople int
+		err := db.QueryRow("SELECT num_people FROM rsvps WHERE event_id = $1 AND google_username = $2", eventID, email).Scan(&numPeople)
+		if err == sql.ErrNoRows {
+			numPeople = 0
+		} else if err != nil {
+			log.Println("[ERROR] failed to query rsvp:", err)
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+		err = db.QueryRow("SELECT COALESCE(SUM(num_people), 0) FROM rsvps WHERE event_id = $1", eventID).Scan(&totalPeople)
+		if err != nil {
+			log.Println("[ERROR] failed to query total:", err)
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]int{"numPeople": numPeople, "totalPeople": totalPeople})
+
+	case http.MethodPost:
+		var req struct {
+			NumPeople int `json:"numPeople"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+		_, err := db.Exec(`
+			INSERT INTO rsvps (event_id, google_username, num_people) VALUES ($1, $2, $3)
+			ON CONFLICT (event_id, google_username) DO UPDATE SET num_people = $3
+		`, eventID, email, req.NumPeople)
+		if err != nil {
+			log.Println("[ERROR] failed to upsert rsvp:", err)
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+		var totalPeople int
+		db.QueryRow("SELECT COALESCE(SUM(num_people), 0) FROM rsvps WHERE event_id = $1", eventID).Scan(&totalPeople)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]int{"numPeople": req.NumPeople, "totalPeople": totalPeople})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }

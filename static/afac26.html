@@ -32,6 +32,30 @@
             border-radius: 50%;
         }
         .header .spacer { flex: 1; }
+        .event-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .event-header img {
+            height: 120px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .event-header p {
+            margin: 0.25rem 0;
+            opacity: 0.7;
+        }
+        .rsvp-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--wa-color-neutral-80);
+        }
+        .rsvp-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body style="opacity: 0">
@@ -43,14 +67,35 @@
             <span class="spacer"></span>
             <wa-button variant="neutral" size="small" id="logout-btn">Switch User</wa-button>
         </div>
-        <wa-card style="text-align: center;">
-            <img src="/afac26-logo.png" alt="Applause for a Cause" style="height: 120px; border-radius: 8px; margin-bottom: 1rem;">
-            <p>Feb 7, 2026 · 6:30 PM</p>
-            <p>Helios Gym</p>
+        <wa-card>
+            <div class="event-header">
+                <img src="/afac26-logo.png" alt="Applause for a Cause">
+                <p>Feb 7, 2026 · 6:30 PM</p>
+                <p>Helios Gym</p>
+            </div>
+            <div class="rsvp-section">
+                <div id="rsvp-prompt">
+                    <strong>RSVP now!</strong>
+                    <div class="rsvp-controls">
+                        <span>Number of people:</span>
+                        <wa-input type="number" id="num-people" min="1" value="1" style="width: 80px;"></wa-input>
+                        <wa-button variant="brand" id="rsvp-btn">RSVP</wa-button>
+                    </div>
+                </div>
+                <div id="rsvp-status" style="display: none;">
+                    <strong id="rsvp-message"></strong>
+                    <div class="rsvp-controls">
+                        <span>Change to:</span>
+                        <wa-input type="number" id="num-people-update" min="0" value="1" style="width: 80px;"></wa-input>
+                        <wa-button variant="neutral" id="update-btn">Update</wa-button>
+                    </div>
+                </div>
+            </div>
         </wa-card>
+        <wa-button variant="text" size="small" href="/" style="margin-top: 1rem;">« Events</wa-button>
     </div>
     <script type="module">
-        import { auth, logout } from '/app.js';
+        import { auth, logout, api } from '/app.js';
 
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             document.documentElement.className = e.matches ? 'wa-dark' : 'wa-light';
@@ -59,6 +104,40 @@
         await auth();
         document.getElementById('main').style.display = 'block';
         document.getElementById('logout-btn').addEventListener('click', logout);
+
+        const eventId = 'afac26';
+
+        async function loadRSVP() {
+            const data = await api('GET', `/api/rsvp/${eventId}`);
+            updateUI(data);
+        }
+
+        function updateUI(data) {
+            if (data.numPeople > 0) {
+                document.getElementById('rsvp-prompt').style.display = 'none';
+                document.getElementById('rsvp-status').style.display = 'block';
+                const word = data.numPeople === 1 ? 'person' : 'people';
+                document.getElementById('rsvp-message').textContent = `You're RSVPed for ${data.numPeople} ${word}.`;
+                document.getElementById('num-people-update').value = data.numPeople;
+            } else {
+                document.getElementById('rsvp-prompt').style.display = 'block';
+                document.getElementById('rsvp-status').style.display = 'none';
+            }
+        }
+
+        document.getElementById('rsvp-btn').addEventListener('click', async () => {
+            const numPeople = parseInt(document.getElementById('num-people').value) || 1;
+            const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople });
+            updateUI(data);
+        });
+
+        document.getElementById('update-btn').addEventListener('click', async () => {
+            const numPeople = parseInt(document.getElementById('num-people-update').value) || 0;
+            const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople });
+            updateUI(data);
+        });
+
+        await loadRSVP();
 
         await customElements.whenDefined('wa-card');
         document.body.style.opacity = 1;

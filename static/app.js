@@ -14,6 +14,25 @@ export function logout() {
     location.reload();
 }
 
+export async function api(method, path, body) {
+    const profile = getProfile();
+    const opts = {
+        method,
+        headers: {
+            'Authorization': 'Bearer ' + (profile?.token || ''),
+            'Content-Type': 'application/json'
+        }
+    };
+    if (body !== undefined) {
+        opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(path, opts);
+    if (!res.ok) {
+        throw new Error(await res.text());
+    }
+    return res.json();
+}
+
 function bind(data) {
     document.querySelectorAll('[data-bind]').forEach(el => {
         const key = el.dataset.bind;
