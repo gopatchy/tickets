@@ -56,6 +56,37 @@
             gap: 1rem;
             margin-top: 1rem;
         }
+        .donation-options {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--wa-color-neutral-80);
+        }
+        .donation-options label {
+            display: block;
+            margin: 0.5rem 0;
+            cursor: pointer;
+        }
+        .custom-amount {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1.5rem;
+        }
+        .thank-you {
+            background: var(--wa-color-success-95);
+            color: var(--wa-color-success-30);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .wa-dark .thank-you {
+            background: var(--wa-color-success-20);
+            color: var(--wa-color-success-90);
+        }
+        .donation-info {
+            margin-top: 0.5rem;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body style="opacity: 0">
@@ -66,6 +97,9 @@
             <span data-bind="name"></span>
             <span class="spacer"></span>
             <wa-button variant="neutral" size="small" id="logout-btn">Switch User</wa-button>
+        </div>
+        <div id="thank-you" class="thank-you" style="display: none;">
+            Thank you for your generous donation!
         </div>
         <wa-card>
             <div class="event-header">
@@ -79,15 +113,32 @@
                     <div class="rsvp-controls">
                         <span>Number of people:</span>
                         <wa-input type="number" id="num-people" min="1" value="1" style="width: 80px;"></wa-input>
-                        <wa-button variant="brand" id="rsvp-btn">RSVP</wa-button>
                     </div>
+                    <div class="donation-options">
+                        <strong>Would you like to make a donation?</strong>
+                        <label><input type="radio" name="donation" value="25" checked> $25 suggested donation per family</label>
+                        <label><input type="radio" name="donation" value="custom"> Other amount</label>
+                        <div class="custom-amount" id="custom-amount-row" style="display: none;">
+                            $<wa-input type="number" id="custom-amount" min="1" value="25" style="width: 100px;"></wa-input>
+                        </div>
+                        <label><input type="radio" name="donation" value="0"> Maybe later</label>
+                    </div>
+                    <wa-button variant="brand" id="rsvp-btn" style="margin-top: 1rem;">RSVP</wa-button>
                 </div>
                 <div id="rsvp-status" style="display: none;">
                     <strong id="rsvp-message"></strong>
+                    <div id="donation-status" class="donation-info"></div>
                     <div class="rsvp-controls">
                         <span>Change to:</span>
                         <wa-input type="number" id="num-people-update" min="0" value="1" style="width: 80px;"></wa-input>
                         <wa-button variant="neutral" id="update-btn">Update</wa-button>
+                    </div>
+                    <div class="donation-options">
+                        <strong>Make an additional donation?</strong>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                            $<wa-input type="number" id="additional-amount" min="1" value="25" style="width: 100px;"></wa-input>
+                            <wa-button variant="neutral" id="donate-btn">Donate</wa-button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,6 +158,18 @@
 
         const eventId = 'afac26';
 
+        if (new URLSearchParams(location.search).get('donated') === '1') {
+            document.getElementById('thank-you').style.display = 'block';
+            history.replaceState({}, '', location.pathname);
+        }
+
+        document.querySelectorAll('input[name="donation"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.getElementById('custom-amount-row').style.display =
+                    radio.value === 'custom' && radio.checked ? 'flex' : 'none';
+            });
+        });
+
         async function loadRSVP() {
             const data = await api('GET', `/api/rsvp/${eventId}`);
             updateUI(data);
@@ -119,22 +182,53 @@
                 const word = data.numPeople === 1 ? 'person' : 'people';
                 document.getElementById('rsvp-message').textContent = `You're RSVPed for ${data.numPeople} ${word}.`;
                 document.getElementById('num-people-update').value = data.numPeople;
+                if (data.donation > 0) {
+                    document.getElementById('donation-status').textContent = `You've donated $${data.donation.toFixed(2)}. Thank you!`;
+                } else {
+                    document.getElementById('donation-status').textContent = '';
+                }
             } else {
                 document.getElementById('rsvp-prompt').style.display = 'block';
                 document.getElementById('rsvp-status').style.display = 'none';
             }
         }
 
+        function getSelectedDonation() {
+            const selected = document.querySelector('input[name="donation"]:checked');
+            if (!selected || selected.value === '0') return 0;
+            if (selected.value === 'custom') {
+                return parseInt(document.getElementById('custom-amount').value) || 0;
+            }
+            return parseInt(selected.value);
+        }
+
+        async function startDonation(amount) {
+            const data = await api('POST', `/api/donate/${eventId}`, { amount: amount * 100 });
+            location.href = data.url;
+        }
+
         document.getElementById('rsvp-btn').addEventListener('click', async () => {
             const numPeople = parseInt(document.getElementById('num-people').value) || 1;
             const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople });
             updateUI(data);
+
+            const donationAmount = getSelectedDonation();
+            if (donationAmount > 0) {
+                await startDonation(donationAmount);
+            }
         });
 
         document.getElementById('update-btn').addEventListener('click', async () => {
             const numPeople = parseInt(document.getElementById('num-people-update').value) || 0;
             const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople });
             updateUI(data);
+        });
+
+        document.getElementById('donate-btn').addEventListener('click', async () => {
+            const amount = parseInt(document.getElementById('additional-amount').value) || 0;
+            if (amount > 0) {
+                await startDonation(amount);
+            }
         });
 
         await loadRSVP();
