@@ -2,7 +2,10 @@ module tickets
 
 go 1.25.4
 
-require google.golang.org/api v0.258.0
+require (
+	github.com/lib/pq v1.10.9
+	google.golang.org/api v0.258.0
+)
 
 require (
 	cloud.google.com/go/auth v0.17.0 // indirect

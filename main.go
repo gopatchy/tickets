@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"html/template"
@@ -11,13 +12,40 @@ import (
 	"path/filepath"
 	"strings"
 
+	_ "github.com/lib/pq"
 	"google.golang.org/api/idtoken"
 )
 
-var templates *template.Template
+var (
+	templates *template.Template
+	db        *sql.DB
+)
 
 func init() {
 	templates = template.Must(template.ParseGlob("static/*.html"))
+
+	var err error
+	db, err = sql.Open("postgres", os.Getenv("PGCONN"))
+	if err != nil {
+		log.Fatal("[ERROR] failed to open database: ", err)
+	}
+
+	if err = db.Ping(); err != nil {
+		log.Fatal("[ERROR] failed to connect to database: ", err)
+	}
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS rsvps (
+			event_id TEXT NOT NULL,
+			google_username TEXT NOT NULL,
+			num_people INTEGER NOT NULL DEFAULT 0,
+			donation DECIMAL(10,2) NOT NULL DEFAULT 0,
+			PRIMARY KEY (event_id, google_username)
+		)
+	`)
+	if err != nil {
+		log.Fatal("[ERROR] failed to create table: ", err)
+	}
 }
 
 func main() {
