@@ -23,6 +23,7 @@ func init() {
 func main() {
 	http.HandleFunc("/", handleStatic)
 	http.HandleFunc("/auth/google/callback", handleGoogleCallback)
+	http.HandleFunc("/auth/logout", handleLogout)
 
 	log.Println("server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -97,6 +98,16 @@ func setProfile(w http.ResponseWriter, profile map[string]any) {
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
+}
+
+func handleLogout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   "profile",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
