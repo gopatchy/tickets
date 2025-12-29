@@ -26,20 +26,12 @@ function bind(data) {
     });
 }
 
-function waitForGoogle() {
-    return new Promise((resolve) => {
-        if (typeof google !== 'undefined') {
-            resolve();
-            return;
-        }
-        const check = setInterval(() => {
-            if (typeof google !== 'undefined') {
-                clearInterval(check);
-                resolve();
-            }
-        }, 50);
-    });
-}
+const googleReady = new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.onload = resolve;
+    document.head.appendChild(script);
+});
 
 export async function auth() {
     let profile = getProfile();
@@ -48,7 +40,7 @@ export async function auth() {
         return profile;
     }
 
-    await waitForGoogle();
+    await googleReady;
 
     const signin = document.getElementById('signin');
     signin.style.display = 'block';
