@@ -17,7 +17,7 @@
             margin: 0;
             padding: 1rem;
         }
-        #signin { display: none; }
+        #signin { display: none; flex: 1; align-items: center; justify-content: center; }
         #main { display: none; width: 100%; max-width: 600px; }
         .header {
             display: flex;
@@ -143,7 +143,7 @@
                 </div>
             </div>
         </wa-card>
-        <wa-button variant="text" size="small" href="/" style="margin-top: 1rem;">« Events</wa-button>
+        <wa-button variant="text" size="small" href="/" style="margin-top: 2rem; margin-left: 3px;">« Events</wa-button>
     </div>
     <script type="module">
         import { auth, logout, api } from '/app.js';
