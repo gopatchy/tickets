@@ -28,16 +28,11 @@ var (
 )
 
 func init() {
-	log.Println("starting up")
-
 	templates = template.Must(template.New("").ParseGlob("static/*.html"))
 	template.Must(templates.ParseGlob("static/*.js"))
 
-	pgconn := os.Getenv("PGCONN")
-	log.Println("connecting to database:", pgconn[:min(len(pgconn), 30)]+"...")
-
 	var err error
-	db, err = sql.Open("postgres", pgconn)
+	db, err = sql.Open("postgres", os.Getenv("PGCONN"))
 	if err != nil {
 		log.Fatal("[ERROR] failed to open database: ", err)
 	}

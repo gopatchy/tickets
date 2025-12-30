@@ -81,10 +81,11 @@ export async function auth() {
             }
         });
 
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         google.accounts.id.renderButton(signin, {
             type: 'standard',
             size: 'large',
-            theme: 'outline',
+            theme: isDark ? 'filled_black' : 'outline',
             text: 'sign_in_with',
             shape: 'rectangular',
             logo_alignment: 'left'
