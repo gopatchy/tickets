@@ -115,10 +115,6 @@
             background: var(--wa-color-success-20);
             color: var(--wa-color-success-90);
         }
-        .donation-info {
-            margin-top: 0.5rem;
-            opacity: 0.7;
-        }
     </style>
 </head>
 <body style="opacity: 0">
@@ -143,8 +139,8 @@
                 <p>Helios Gym</p>
             </div>
             <div class="rsvp-section">
-                <strong id="rsvp-header">RSVP now!</strong>
-                <div style="margin-top: 1rem;">Number of people:</div>
+                <div id="rsvp-header" style="font-weight: bold; margin-bottom: 1rem;">RSVP now!</div>
+                <div>Number of people:</div>
                 <div class="button-group" id="num-people-group">
                     <wa-button size="small" variant="neutral" data-value="0">0</wa-button>
                     <wa-button size="small" variant="neutral" class="selected" data-value="1">1</wa-button>
@@ -157,8 +153,8 @@
                     <wa-button size="small" variant="neutral" data-value="8">8</wa-button>
                 </div>
                 <div class="donation-section">
-                    <div id="donation-status" class="donation-info" style="display: none; margin-bottom: 0.5rem;"></div>
-                    <strong id="donation-header">Would you like to make a donation?</strong>
+                    <div id="donation-status" style="display: none; margin-bottom: 1rem;"></div>
+                    <div id="donation-header">Would you like to make a donation?</div>
                     <div class="button-group donation-group" id="donation-group">
                         <wa-button variant="neutral" class="selected" data-value="25">$25</wa-button>
                         <wa-button variant="neutral" data-value="50">$50</wa-button>
