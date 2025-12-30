@@ -76,7 +76,6 @@ func main() {
 	http.HandleFunc("POST /auth/google/callback", handleGoogleCallback)
 	http.HandleFunc("GET /api/rsvp/{eventID}", handleRSVPGet)
 	http.HandleFunc("POST /api/rsvp/{eventID}", handleRSVPPost)
-	http.HandleFunc("POST /api/donate/{eventID}", handleDonate)
 	http.HandleFunc("GET /api/donate/success/{eventID}", handleDonateSuccess)
 	http.HandleFunc("POST /api/stripe/webhook", handleStripeWebhook)
 
@@ -218,46 +217,52 @@ func handleRSVPPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		NumPeople int `json:"numPeople"`
+		NumPeople     *int  `json:"numPeople"`
+		DonationCents int64 `json:"donationCents"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	_, err := db.Exec(`
-		INSERT INTO rsvps (event_id, google_username, num_people) VALUES ($1, $2, $3)
-		ON CONFLICT (event_id, google_username) DO UPDATE SET num_people = $3
-	`, eventID, email, req.NumPeople)
-	if err != nil {
-		log.Println("[ERROR] failed to upsert rsvp:", err)
+
+	if req.NumPeople != nil {
+		_, err := db.Exec(`
+			INSERT INTO rsvps (event_id, google_username, num_people) VALUES ($1, $2, $3)
+			ON CONFLICT (event_id, google_username) DO UPDATE SET num_people = $3
+		`, eventID, email, *req.NumPeople)
+		if err != nil {
+			log.Println("[ERROR] failed to upsert rsvp:", err)
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	var numPeople int
+	var donation float64
+	err := db.QueryRow("SELECT num_people, donation FROM rsvps WHERE event_id = $1 AND google_username = $2", eventID, email).Scan(&numPeople, &donation)
+	if err != nil && err != sql.ErrNoRows {
+		log.Println("[ERROR] failed to query rsvp:", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
+
+	resp := map[string]any{"numPeople": numPeople, "donation": donation}
+
+	if req.DonationCents > 0 {
+		stripeURL, err := createCheckoutSession(eventID, email, req.DonationCents)
+		if err != nil {
+			log.Println("[ERROR] failed to create checkout session:", err)
+			http.Error(w, "failed to create checkout session", http.StatusInternalServerError)
+			return
+		}
+		resp["url"] = stripeURL
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{"numPeople": req.NumPeople})
+	json.NewEncoder(w).Encode(resp)
 }
 
-func handleDonate(w http.ResponseWriter, r *http.Request) {
-	eventID := r.PathValue("eventID")
-	email, ok := authorize(r)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	var req struct {
-		Amount int64 `json:"amount"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
-		return
-	}
-
-	if req.Amount < 100 {
-		http.Error(w, "minimum donation is $1", http.StatusBadRequest)
-		return
-	}
-
+func createCheckoutSession(eventID, email string, amountCents int64) (string, error) {
 	baseURL := os.Getenv("BASE_URL")
 	params := &stripe.CheckoutSessionParams{
 		CustomerEmail: stripe.String(email),
@@ -269,7 +274,7 @@ func handleDonate(w http.ResponseWriter, r *http.Request) {
 					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
 						Name: stripe.String("Donation - Applause for a Cause"),
 					},
-					UnitAmount: stripe.Int64(req.Amount),
+					UnitAmount: stripe.Int64(amountCents),
 				},
 				Quantity: stripe.Int64(1),
 			},
@@ -284,13 +289,9 @@ func handleDonate(w http.ResponseWriter, r *http.Request) {
 
 	s, err := session.New(params)
 	if err != nil {
-		log.Println("[ERROR] failed to create checkout session:", err)
-		http.Error(w, "failed to create checkout session", http.StatusInternalServerError)
-		return
+		return "", err
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"url": s.URL})
+	return s.URL, nil
 }
 
 func processPayment(sess *stripe.CheckoutSession) error {

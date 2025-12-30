@@ -269,11 +269,15 @@
         }, true);
 
         setupButtonGroup('additional-donation-group', async val => {
+            let donationCents = 0;
             if (val === 'custom') {
-                const amount = parseInt(document.getElementById('additional-amount').value) || 0;
-                if (amount > 0) await startDonation(amount);
+                donationCents = (parseInt(document.getElementById('additional-amount').value) || 0) * 100;
             } else {
-                await startDonation(parseInt(val));
+                donationCents = parseInt(val) * 100;
+            }
+            if (donationCents > 0) {
+                const data = await api('POST', `/api/rsvp/${eventId}`, { donationCents });
+                if (data.url) location.href = data.url;
             }
         }, true);
 
@@ -306,21 +310,19 @@
             }
         }
 
-        async function startDonation(amount) {
-            const data = await api('POST', `/api/donate/${eventId}`, { amount: amount * 100 });
-            location.href = data.url;
-        }
-
         document.getElementById('rsvp-btn').addEventListener('click', async () => {
-            const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople: selectedNumPeople });
-            updateUI(data);
-
-            let donationAmount = selectedDonation;
-            if (donationAmount === 'custom') {
-                donationAmount = parseInt(document.getElementById('custom-amount').value) || 0;
+            let donationCents = 0;
+            if (selectedDonation === 'custom') {
+                donationCents = (parseInt(document.getElementById('custom-amount').value) || 0) * 100;
+            } else if (selectedDonation > 0) {
+                donationCents = selectedDonation * 100;
             }
-            if (donationAmount > 0) {
-                await startDonation(donationAmount);
+
+            const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople: selectedNumPeople, donationCents });
+            if (data.url) {
+                location.href = data.url;
+            } else {
+                updateUI(data);
             }
         });
 
