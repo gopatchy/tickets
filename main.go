@@ -260,7 +260,8 @@ func handleDonate(w http.ResponseWriter, r *http.Request) {
 
 	baseURL := os.Getenv("BASE_URL")
 	params := &stripe.CheckoutSessionParams{
-		Mode: stripe.String(string(stripe.CheckoutSessionModePayment)),
+		CustomerEmail: stripe.String(email),
+		Mode:          stripe.String(string(stripe.CheckoutSessionModePayment)),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
