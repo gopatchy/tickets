@@ -50,27 +50,28 @@
             padding-top: 1.5rem;
             border-top: 1px solid var(--wa-color-neutral-80);
         }
-        .rsvp-controls {
+        .button-group {
             display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-top: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
         }
-        .donation-options {
+        .donation-section {
             margin-top: 1rem;
             padding-top: 1rem;
             border-top: 1px solid var(--wa-color-neutral-80);
-        }
-        .donation-options label {
-            display: block;
-            margin: 0.5rem 0;
-            cursor: pointer;
         }
         .custom-amount {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        .rsvp-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
         }
         .thank-you {
             background: var(--wa-color-success-95);
@@ -110,34 +111,55 @@
             <div class="rsvp-section">
                 <div id="rsvp-prompt">
                     <strong>RSVP now!</strong>
-                    <div class="rsvp-controls">
-                        <span>Number of people:</span>
-                        <wa-input type="number" id="num-people" min="1" value="1" style="width: 80px;"></wa-input>
+                    <div style="margin-top: 0.5rem;">Number of people:</div>
+                    <div class="button-group" id="num-people-group">
+                        <wa-button size="small" variant="brand" data-value="1">1</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="2">2</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="3">3</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="4">4</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="5">5</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="6">6+</wa-button>
                     </div>
-                    <div class="donation-options">
+                    <div class="donation-section">
                         <strong>Would you like to make a donation?</strong>
-                        <label><input type="radio" name="donation" value="25" checked> $25 suggested donation per family</label>
-                        <label><input type="radio" name="donation" value="custom"> Other amount</label>
+                        <div style="opacity: 0.7; margin-top: 0.25rem;">Suggested: $25 per family</div>
+                        <div class="button-group" id="donation-group">
+                            <wa-button size="small" variant="brand" data-value="25">$25</wa-button>
+                            <wa-button size="small" variant="neutral" data-value="50">$50</wa-button>
+                            <wa-button size="small" variant="neutral" data-value="100">$100</wa-button>
+                            <wa-button size="small" variant="neutral" data-value="custom">Other</wa-button>
+                            <wa-button size="small" variant="neutral" data-value="0">Maybe later</wa-button>
+                        </div>
                         <div class="custom-amount" id="custom-amount-row" style="display: none;">
                             $<wa-input type="number" id="custom-amount" min="1" value="25" style="width: 100px;"></wa-input>
                         </div>
-                        <label><input type="radio" name="donation" value="0"> Maybe later</label>
                     </div>
                     <wa-button variant="brand" id="rsvp-btn" style="margin-top: 1rem;">RSVP</wa-button>
                 </div>
                 <div id="rsvp-status" style="display: none;">
                     <strong id="rsvp-message"></strong>
                     <div id="donation-status" class="donation-info"></div>
-                    <div class="rsvp-controls">
-                        <span>Change to:</span>
-                        <wa-input type="number" id="num-people-update" min="0" value="1" style="width: 80px;"></wa-input>
-                        <wa-button variant="neutral" id="update-btn">Update</wa-button>
+                    <div style="margin-top: 1rem;">Change to:</div>
+                    <div class="button-group" id="num-people-update-group">
+                        <wa-button size="small" variant="neutral" data-value="1">1</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="2">2</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="3">3</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="4">4</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="5">5</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="6">6+</wa-button>
+                        <wa-button size="small" variant="neutral" data-value="0">Cancel RSVP</wa-button>
                     </div>
-                    <div class="donation-options">
+                    <div class="donation-section">
                         <strong>Make an additional donation?</strong>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                        <div class="button-group" id="additional-donation-group">
+                            <wa-button size="small" variant="neutral" data-value="25">$25</wa-button>
+                            <wa-button size="small" variant="neutral" data-value="50">$50</wa-button>
+                            <wa-button size="small" variant="neutral" data-value="100">$100</wa-button>
+                            <wa-button size="small" variant="neutral" data-value="custom">Other</wa-button>
+                        </div>
+                        <div class="custom-amount" id="additional-custom-row" style="display: none;">
                             $<wa-input type="number" id="additional-amount" min="1" value="25" style="width: 100px;"></wa-input>
-                            <wa-button variant="neutral" id="donate-btn">Donate</wa-button>
+                            <wa-button size="small" variant="neutral" id="additional-custom-btn">Donate</wa-button>
                         </div>
                     </div>
                 </div>
@@ -163,11 +185,48 @@
             history.replaceState({}, '', location.pathname);
         }
 
-        document.querySelectorAll('input[name="donation"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-                document.getElementById('custom-amount-row').style.display =
-                    radio.value === 'custom' && radio.checked ? 'flex' : 'none';
+        let selectedNumPeople = 1;
+        let selectedDonation = 25;
+
+        function setupButtonGroup(groupId, onChange) {
+            const group = document.getElementById(groupId);
+            group.querySelectorAll('wa-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    group.querySelectorAll('wa-button').forEach(b => b.variant = 'neutral');
+                    btn.variant = 'brand';
+                    onChange(btn.dataset.value);
+                });
             });
+        }
+
+        setupButtonGroup('num-people-group', val => {
+            selectedNumPeople = parseInt(val);
+        });
+
+        setupButtonGroup('donation-group', val => {
+            selectedDonation = val === 'custom' ? 'custom' : (val === '0' ? 0 : parseInt(val));
+            document.getElementById('custom-amount-row').style.display = val === 'custom' ? 'flex' : 'none';
+        });
+
+        setupButtonGroup('num-people-update-group', async val => {
+            const numPeople = parseInt(val);
+            const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople });
+            updateUI(data);
+        });
+
+        setupButtonGroup('additional-donation-group', async val => {
+            if (val === 'custom') {
+                document.getElementById('additional-custom-row').style.display = 'flex';
+            } else {
+                await startDonation(parseInt(val));
+            }
+        });
+
+        document.getElementById('additional-custom-btn').addEventListener('click', async () => {
+            const amount = parseInt(document.getElementById('additional-amount').value) || 0;
+            if (amount > 0) {
+                await startDonation(amount);
+            }
         });
 
         async function loadRSVP() {
@@ -181,7 +240,6 @@
                 document.getElementById('rsvp-status').style.display = 'block';
                 const word = data.numPeople === 1 ? 'person' : 'people';
                 document.getElementById('rsvp-message').textContent = `You're RSVPed for ${data.numPeople} ${word}.`;
-                document.getElementById('num-people-update').value = data.numPeople;
                 if (data.donation > 0) {
                     document.getElementById('donation-status').textContent = `You've donated $${data.donation.toFixed(2)}. Thank you!`;
                 } else {
@@ -193,41 +251,21 @@
             }
         }
 
-        function getSelectedDonation() {
-            const selected = document.querySelector('input[name="donation"]:checked');
-            if (!selected || selected.value === '0') return 0;
-            if (selected.value === 'custom') {
-                return parseInt(document.getElementById('custom-amount').value) || 0;
-            }
-            return parseInt(selected.value);
-        }
-
         async function startDonation(amount) {
             const data = await api('POST', `/api/donate/${eventId}`, { amount: amount * 100 });
             location.href = data.url;
         }
 
         document.getElementById('rsvp-btn').addEventListener('click', async () => {
-            const numPeople = parseInt(document.getElementById('num-people').value) || 1;
-            const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople });
+            const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople: selectedNumPeople });
             updateUI(data);
 
-            const donationAmount = getSelectedDonation();
+            let donationAmount = selectedDonation;
+            if (donationAmount === 'custom') {
+                donationAmount = parseInt(document.getElementById('custom-amount').value) || 0;
+            }
             if (donationAmount > 0) {
                 await startDonation(donationAmount);
-            }
-        });
-
-        document.getElementById('update-btn').addEventListener('click', async () => {
-            const numPeople = parseInt(document.getElementById('num-people-update').value) || 0;
-            const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople });
-            updateUI(data);
-        });
-
-        document.getElementById('donate-btn').addEventListener('click', async () => {
-            const amount = parseInt(document.getElementById('additional-amount').value) || 0;
-            if (amount > 0) {
-                await startDonation(amount);
             }
         });
 
