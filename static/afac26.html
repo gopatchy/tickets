@@ -179,7 +179,9 @@
 
         const eventId = 'afac26';
 
-        if (new URLSearchParams(location.search).get('donated') === '1') {
+        const donatedAmount = new URLSearchParams(location.search).get('donated');
+        if (donatedAmount) {
+            document.getElementById('thank-you').textContent = `Thank you for your $${parseFloat(donatedAmount).toFixed(2)} donation!`;
             document.getElementById('thank-you').style.display = 'block';
             history.replaceState({}, '', location.pathname);
         }
@@ -269,6 +271,8 @@
                 location.href = data.url;
             } else {
                 updateUI(data);
+                const word = data.numPeople === 1 ? 'person' : 'people';
+                document.getElementById('rsvp-confirmed').textContent = `Your RSVP has been updated to ${data.numPeople} ${word}.`;
                 document.getElementById('rsvp-confirmed').style.display = 'block';
             }
         });

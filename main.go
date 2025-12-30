@@ -367,7 +367,8 @@ func handleDonateSuccess(w http.ResponseWriter, r *http.Request) {
 		log.Println("[ERROR] failed to process payment:", err)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/%s?donated=1", eventID), http.StatusSeeOther)
+	amount := float64(sess.AmountTotal) / 100
+	http.Redirect(w, r, fmt.Sprintf("/%s?donated=%.2f", eventID, amount), http.StatusSeeOther)
 }
 
 func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
