@@ -109,8 +109,18 @@ export async function auth() {
             }
         });
 
+        signin.style.flexDirection = 'column';
+
+        const header = document.createElement('div');
+        header.textContent = 'HCA Events';
+        header.style.cssText = 'font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;';
+        signin.appendChild(header);
+
+        const buttonContainer = document.createElement('div');
+        signin.appendChild(buttonContainer);
+
         const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        google.accounts.id.renderButton(signin, {
+        google.accounts.id.renderButton(buttonContainer, {
             type: 'standard',
             theme: isDark ? 'outline' : 'filled_black',
             size: 'large',
