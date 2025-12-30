@@ -91,6 +91,15 @@ func handleStatic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !strings.Contains(name, ".") {
+		t := templates.Lookup(name + ".html")
+		if t != nil {
+			w.Header().Set("Content-Type", "text/html")
+			t.Execute(w, templateData())
+			return
+		}
+	}
+
 	http.ServeFile(w, r, filepath.Join("static", name))
 }
 
@@ -266,8 +275,8 @@ func handleDonate(w http.ResponseWriter, r *http.Request) {
 				Quantity: stripe.Int64(1),
 			},
 		},
-		SuccessURL: stripe.String(os.Getenv("BASE_URL") + "/" + eventID + ".html?donated=1"),
-		CancelURL:  stripe.String(os.Getenv("BASE_URL") + "/" + eventID + ".html"),
+		SuccessURL: stripe.String(os.Getenv("BASE_URL") + "/" + eventID + "?donated=1"),
+		CancelURL:  stripe.String(os.Getenv("BASE_URL") + "/" + eventID),
 		Metadata: map[string]string{
 			"event_id": eventID,
 			"email":    email,
