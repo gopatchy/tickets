@@ -81,11 +81,9 @@ export async function auth() {
             }
         });
 
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         google.accounts.id.renderButton(signin, {
             type: 'standard',
             size: 'large',
-            theme: isDark ? 'filled_blue' : 'filled_black',
             text: 'sign_in_with',
             shape: 'pill',
             logo_alignment: 'left'
