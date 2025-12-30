@@ -85,7 +85,7 @@ export async function auth() {
         google.accounts.id.renderButton(signin, {
             type: 'standard',
             size: 'large',
-            theme: isDark ? 'outline' : 'filled_black',
+            theme: isDark ? 'filled_blue' : 'filled_black',
             text: 'sign_in_with',
             shape: 'pill',
             logo_alignment: 'left'
