@@ -63,11 +63,13 @@ export async function auth() {
 
     const signin = document.getElementById('signin');
     signin.style.display = 'flex';
+    signin.style.colorScheme = 'light';
     document.body.style.opacity = 1;
 
     profile = await new Promise((resolve) => {
         google.accounts.id.initialize({
             client_id: CLIENT_ID,
+            itp_support: true,
             callback: async (response) => {
                 const res = await fetch('/auth/google/callback', {
                     method: 'POST',
