@@ -57,12 +57,9 @@
             margin-top: 0.5rem;
         }
         .donation-group {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 0.5rem;
-        }
-        .donation-group wa-button {
-            flex: 1;
-            min-width: 0;
         }
         .donation-group wa-button::part(base) {
             height: 80px;
@@ -78,19 +75,35 @@
             margin-top: 0.4rem;
             --wa-focus-ring-width: 0;
             --wa-input-border-width: 0;
+            --wa-input-focus-ring-color: transparent;
+            --wa-input-border-color: transparent;
+            --wa-input-border-color-focus: transparent;
         }
         wa-input[type="number"]::part(input) {
             -moz-appearance: textfield;
             text-align: center;
+        }
+        .donation-group wa-input::part(base) {
+            border: none;
+            box-shadow: none;
+            outline: none;
+        }
+        .donation-group wa-input::part(base):focus-within {
+            border: none;
+            box-shadow: none;
+            outline: none;
         }
         wa-input[type="number"]::part(input)::-webkit-inner-spin-button,
         wa-input[type="number"]::part(input)::-webkit-outer-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
-        wa-button.selected-yellow::part(base) {
+        wa-button.selected::part(base) {
             background-color: #FEDE02;
             color: #000;
+        }
+        .donation-group wa-input::part(prefix) {
+            padding-right: 0;
         }
         .donation-section {
             margin-top: 1rem;
@@ -137,7 +150,7 @@
                     <strong>RSVP now!</strong>
                     <div style="margin-top: 0.5rem;">Number of people:</div>
                     <div class="button-group" id="num-people-group">
-                        <wa-button size="small" variant="neutral" class="selected-yellow" data-value="1">1</wa-button>
+                        <wa-button size="small" variant="neutral" class="selected" data-value="1">1</wa-button>
                         <wa-button size="small" variant="neutral" data-value="2">2</wa-button>
                         <wa-button size="small" variant="neutral" data-value="3">3</wa-button>
                         <wa-button size="small" variant="neutral" data-value="4">4</wa-button>
@@ -149,9 +162,9 @@
                     <div class="donation-section">
                         <strong>Would you like to make a donation?</strong>
                         <div class="button-group donation-group" id="donation-group">
-                            <wa-button variant="neutral" class="selected-yellow" data-value="25">$25</wa-button>
+                            <wa-button variant="neutral" class="selected" data-value="25">$25</wa-button>
                             <wa-button variant="neutral" data-value="50">$50</wa-button>
-                            <wa-button variant="neutral" data-value="custom"><span>Other</span><wa-input type="number" size="small" id="custom-amount" min="1" value="100" placeholder="100"></wa-input></wa-button>
+                            <wa-button variant="neutral" data-value="custom"><span>Other</span><wa-input type="number" size="small" id="custom-amount" min="1" value="100"><span slot="start">$</span></wa-input></wa-button>
                             <wa-button variant="neutral" data-value="0">Maybe later</wa-button>
                         </div>
                     </div>
@@ -180,7 +193,7 @@
                         <div class="button-group donation-group" id="additional-donation-group">
                             <wa-button variant="neutral" data-value="25">$25</wa-button>
                             <wa-button variant="neutral" data-value="50">$50</wa-button>
-                            <wa-button variant="neutral" data-value="custom"><span>Other</span><wa-input type="number" size="small" id="additional-amount" min="1" value="100"></wa-input></wa-button>
+                            <wa-button variant="neutral" data-value="custom"><span>Other</span><wa-input type="number" size="small" id="additional-amount" min="1" value="100"><span slot="start">$</span></wa-input></wa-button>
                         </div>
                     </div>
                 </div>
@@ -209,17 +222,17 @@
         let selectedNumPeople = 1;
         let selectedDonation = 25;
 
-        function setupButtonGroup(groupId, onChange, useYellow = false) {
+        function setupButtonGroup(groupId, onChange, useHighlight = false) {
             const group = document.getElementById(groupId);
             group.querySelectorAll('wa-button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     if (e.target.tagName === 'WA-INPUT') return;
                     group.querySelectorAll('wa-button').forEach(b => {
                         b.variant = 'neutral';
-                        b.classList.remove('selected-yellow');
+                        b.classList.remove('selected');
                     });
-                    if (useYellow) {
-                        btn.classList.add('selected-yellow');
+                    if (useHighlight) {
+                        btn.classList.add('selected');
                     } else {
                         btn.variant = 'brand';
                     }
@@ -235,6 +248,19 @@
         setupButtonGroup('donation-group', val => {
             selectedDonation = val === 'custom' ? 'custom' : (val === '0' ? 0 : parseInt(val));
         }, true);
+
+        document.getElementById('custom-amount').addEventListener('focus', () => {
+            const group = document.getElementById('donation-group');
+            group.querySelectorAll('wa-button').forEach(b => b.classList.remove('selected'));
+            group.querySelector('wa-button[data-value="custom"]').classList.add('selected');
+            selectedDonation = 'custom';
+        });
+
+        document.getElementById('additional-amount').addEventListener('focus', () => {
+            const group = document.getElementById('additional-donation-group');
+            group.querySelectorAll('wa-button').forEach(b => b.classList.remove('selected'));
+            group.querySelector('wa-button[data-value="custom"]').classList.add('selected');
+        });
 
         setupButtonGroup('num-people-update-group', async val => {
             const numPeople = parseInt(val);
@@ -269,11 +295,11 @@
                 }
                 const updateGroup = document.getElementById('num-people-update-group');
                 updateGroup.querySelectorAll('wa-button').forEach(b => {
-                    b.classList.remove('selected-yellow');
+                    b.classList.remove('selected');
                     b.variant = 'neutral';
                 });
                 const currentBtn = updateGroup.querySelector(`wa-button[data-value="${data.numPeople}"]`);
-                if (currentBtn) currentBtn.classList.add('selected-yellow');
+                if (currentBtn) currentBtn.classList.add('selected');
             } else {
                 document.getElementById('rsvp-prompt').style.display = 'block';
                 document.getElementById('rsvp-status').style.display = 'none';
