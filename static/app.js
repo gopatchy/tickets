@@ -69,7 +69,6 @@ export async function auth() {
     profile = await new Promise((resolve) => {
         google.accounts.id.initialize({
             client_id: CLIENT_ID,
-            itp_support: true,
             callback: async (response) => {
                 const res = await fetch('/auth/google/callback', {
                     method: 'POST',
@@ -83,8 +82,10 @@ export async function auth() {
             }
         });
 
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         google.accounts.id.renderButton(signin, {
             type: 'standard',
+            theme: isDark ? 'outline' : 'filled_black',
             size: 'large',
             text: 'sign_in_with',
             shape: 'pill',
