@@ -270,6 +270,9 @@ func createCheckoutSession(eventID, email string, amountCents int64) (string, er
 	params := &stripe.CheckoutSessionParams{
 		CustomerEmail: stripe.String(email),
 		Mode:          stripe.String(string(stripe.CheckoutSessionModePayment)),
+		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
+			ReceiptEmail: stripe.String(email),
+		},
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
