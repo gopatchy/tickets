@@ -97,15 +97,27 @@ export async function auth() {
         google.accounts.id.initialize({
             client_id: CLIENT_ID,
             callback: async (response) => {
-                const res = await fetch('/auth/google/callback', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'credential=' + encodeURIComponent(response.credential)
-                });
-                const profile = await res.json();
-                setProfile(profile);
-                signin.style.display = 'none';
-                resolve(profile);
+                try {
+                    const res = await fetch('/auth/google/callback', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: 'credential=' + encodeURIComponent(response.credential)
+                    });
+                    if (!res.ok) {
+                        throw new Error(`server returned ${res.status}: ${await res.text()}`);
+                    }
+                    const profile = await res.json();
+                    setProfile(profile);
+                    signin.style.display = 'none';
+                    resolve(profile);
+                } catch (err) {
+                    console.error('sign-in callback error:', err);
+                    alert('Sign-in failed: ' + err.message);
+                }
+            },
+            error_callback: (err) => {
+                console.error('google sign-in error:', err);
+                alert('Google sign-in error: ' + (err.message || err.type || JSON.stringify(err)));
             }
         });
 
