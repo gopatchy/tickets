@@ -140,7 +140,7 @@
             <wa-button variant="neutral" size="small" id="logout-btn">Switch User</wa-button>
         </div>
         <div id="thank-you" class="thank-you" style="display: none;">
-            Thank you for your generous donation!
+            Thank you for your donation!
         </div>
         <wa-card>
             <div class="event-header">
@@ -150,6 +150,7 @@
             </div>
             <div class="rsvp-section">
                 <div id="rsvp-prompt">
+                    <div id="prompt-donation-status" class="donation-info" style="display: none; margin-bottom: 1rem;"></div>
                     <strong>RSVP now!</strong>
                     <div style="margin-top: 1rem;">Number of people:</div>
                     <div class="button-group" id="num-people-group">
@@ -310,6 +311,13 @@
             } else {
                 document.getElementById('rsvp-prompt').style.display = 'block';
                 document.getElementById('rsvp-status').style.display = 'none';
+                const promptDonation = document.getElementById('prompt-donation-status');
+                if (data.donation > 0) {
+                    promptDonation.textContent = `You've donated $${data.donation.toFixed(2)}. Thank you!`;
+                    promptDonation.style.display = 'block';
+                } else {
+                    promptDonation.style.display = 'none';
+                }
             }
         }
 

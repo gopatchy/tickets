@@ -374,7 +374,7 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event, err := webhook.ConstructEvent(body, r.Header.Get("Stripe-Signature"), os.Getenv("STRIPE_WEBHOOK_SECRET"))
+	event, err := webhook.ConstructEventWithOptions(body, r.Header.Get("Stripe-Signature"), os.Getenv("STRIPE_WEBHOOK_SECRET"), webhook.ConstructEventOptions{IgnoreAPIVersionMismatch: true})
 	if err != nil {
 		log.Println("[ERROR] failed to verify webhook:", err)
 		http.Error(w, "invalid signature", http.StatusBadRequest)
