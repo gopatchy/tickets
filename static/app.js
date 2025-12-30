@@ -1,5 +1,32 @@
 const CLIENT_ID = '{{.env.GOOGLE_CLIENT_ID}}';
 
+function initHead() {
+    document.documentElement.className = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'wa-dark' : 'wa-light';
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        document.documentElement.className = e.matches ? 'wa-dark' : 'wa-light';
+    });
+
+    const head = document.head;
+    const addLink = (rel, type, href) => {
+        const link = document.createElement('link');
+        link.rel = rel;
+        if (type) link.type = type;
+        link.href = href;
+        head.appendChild(link);
+    };
+    addLink('icon', 'image/svg+xml', '/favicon.svg');
+    addLink('icon', 'image/png', '/favicon.png');
+    addLink('apple-touch-icon', null, '/favicon.png');
+    addLink('stylesheet', null, 'https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3/dist-cdn/styles/themes/default.css');
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3/dist-cdn/webawesome.loader.js';
+    head.appendChild(script);
+}
+
+initHead();
+
 function getProfile() {
     const data = localStorage.getItem('profile');
     return data ? JSON.parse(data) : null;

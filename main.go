@@ -185,6 +185,16 @@ func authorize(r *http.Request) (string, bool) {
 	return email, true
 }
 
+func getRSVP(eventID, email string) (int, float64, error) {
+	var numPeople int
+	var donation float64
+	err := db.QueryRow("SELECT num_people, donation FROM rsvps WHERE event_id = $1 AND google_username = $2", eventID, email).Scan(&numPeople, &donation)
+	if err == sql.ErrNoRows {
+		return 0, 0, nil
+	}
+	return numPeople, donation, err
+}
+
 func handleRSVPGet(w http.ResponseWriter, r *http.Request) {
 	eventID := r.PathValue("eventID")
 	email, ok := authorize(r)
@@ -193,13 +203,8 @@ func handleRSVPGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var numPeople int
-	var donation float64
-	err := db.QueryRow("SELECT num_people, donation FROM rsvps WHERE event_id = $1 AND google_username = $2", eventID, email).Scan(&numPeople, &donation)
-	if err == sql.ErrNoRows {
-		numPeople = 0
-		donation = 0
-	} else if err != nil {
+	numPeople, donation, err := getRSVP(eventID, email)
+	if err != nil {
 		log.Println("[ERROR] failed to query rsvp:", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
@@ -237,10 +242,8 @@ func handleRSVPPost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var numPeople int
-	var donation float64
-	err := db.QueryRow("SELECT num_people, donation FROM rsvps WHERE event_id = $1 AND google_username = $2", eventID, email).Scan(&numPeople, &donation)
-	if err != nil && err != sql.ErrNoRows {
+	numPeople, donation, err := getRSVP(eventID, email)
+	if err != nil {
 		log.Println("[ERROR] failed to query rsvp:", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
