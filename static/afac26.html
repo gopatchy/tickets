@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Applause for a Cause - HCA Tickets</title>
+    <title>Applause for a Cause - HCA RSVP</title>
     <style>
         body {
             font-family: var(--wa-font-sans);
@@ -150,16 +150,17 @@
         <wa-card>
             <div class="event-header">
                 <img src="/afac26-logo.png" alt="Applause for a Cause">
-                <p>Feb 7, 2026 · 6:30 PM</p>
+                <p>Saturday, February 7, 2026 · 6:30 PM</p>
                 <p>Helios Gym</p>
+                <p>597 Central Avenue, Sunnyvale, CA 94086</p>
             </div>
             <div class="info-box">
-                <p style="margin: 0 0 0.5rem 0;">All donations go to <a href="https://svcommunityservices.org/" target="_blank">Sunnyvale Community Services</a>. We suggest $25 per family, but most importantly we'd love to see you there!</p>
+                <p style="margin: 0 0 0.5rem 0;">Tickets are pay-what-you-wish. All donations go to <a href="https://svcommunityservices.org/" target="_blank">Sunnyvale Community Services</a>. We suggest $25 per family, but most importantly we'd love to see you there!</p>
                 <p style="margin: 0;">Feel free to share this page with friends and family.</p>
             </div>
             <div class="rsvp-section">
-                <div id="rsvp-header" style="font-weight: bold; margin-bottom: 1rem;">RSVP now!</div>
-                <div>Number of people:</div>
+                <div id="rsvp-header" style="font-weight: bold; margin-bottom: 1rem;">RSVP now to reserve your seats!</div>
+                <div>Number of people (including performers):</div>
                 <div class="button-group" id="num-people-group">
                     <wa-button size="small" variant="neutral" data-value="0">0</wa-button>
                     <wa-button size="small" variant="neutral" class="selected" data-value="1">1</wa-button>
@@ -248,7 +249,7 @@
                 const word = data.numPeople === 1 ? 'person' : 'people';
                 document.getElementById('rsvp-header').textContent = `You've RSVPed for ${data.numPeople} ${word}.`;
             } else {
-                document.getElementById('rsvp-header').textContent = 'RSVP now!';
+                document.getElementById('rsvp-header').textContent = 'RSVP now to reserve your seats!';
             }
 
             const donationStatus = document.getElementById('donation-status');
