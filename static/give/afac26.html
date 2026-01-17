@@ -174,7 +174,8 @@
             selectedDonation = 'custom';
         });
 
-        document.getElementById('donate-btn').addEventListener('click', async () => {
+        const donateBtn = document.getElementById('donate-btn');
+        donateBtn.addEventListener('click', async () => {
             let donationCents = 0;
             if (selectedDonation === 'custom') {
                 donationCents = (parseInt(document.getElementById('custom-amount').value) || 0) * 100;
@@ -187,9 +188,14 @@
                 return;
             }
 
+            donateBtn.loading = true;
+            donateBtn.disabled = true;
             const data = await api('POST', `/api/donate/${eventId}`, { donationCents });
             if (data.url) {
                 location.href = data.url;
+            } else {
+                donateBtn.loading = false;
+                donateBtn.disabled = false;
             }
         });
 

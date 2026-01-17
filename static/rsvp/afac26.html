@@ -291,7 +291,8 @@
             }
         }
 
-        document.getElementById('rsvp-btn').addEventListener('click', async () => {
+        const rsvpBtn = document.getElementById('rsvp-btn');
+        rsvpBtn.addEventListener('click', async () => {
             let donationCents = 0;
             if (selectedDonation === 'custom') {
                 donationCents = (parseInt(document.getElementById('custom-amount').value) || 0) * 100;
@@ -299,10 +300,16 @@
                 donationCents = selectedDonation * 100;
             }
 
+            if (donationCents > 0) {
+                rsvpBtn.loading = true;
+                rsvpBtn.disabled = true;
+            }
             const data = await api('POST', `/api/rsvp/${eventId}`, { numPeople: selectedNumPeople, donationCents });
             if (data.url) {
                 location.href = data.url;
             } else {
+                rsvpBtn.loading = false;
+                rsvpBtn.disabled = false;
                 updateUI(data);
                 showConfirmation(data.numPeople, null);
             }
