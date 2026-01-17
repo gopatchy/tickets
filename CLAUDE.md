@@ -1,8 +1,9 @@
+- Never change directories (no `cd`)
 - DO NOT add comments to code unless something is *incredibly* subtle
 - Use e.g. map[string]bool{} instead of make() wherever possible
 - Use all-lowercase log messages
 - Prepend log messages with [ERROR] if applicable
-- Don't mention claude in commit messages. Keep them to a single, short, descriptive sentence
+- Don't mention claude in commit messages (no Co-Authored-By). Keep them to a single, short, descriptive sentence
 - Always push after commiting
 - Use git add -A so you don't miss files when committing
 - Never use go build -- use go run instead

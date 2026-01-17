@@ -186,9 +186,9 @@
         <wa-button variant="text" size="small" href="/" style="margin-top: 2rem; margin-left: 3px;">« Events</wa-button>
     </div>
     <script type="module">
-        import { auth, logout, api } from '/app.js';
+        import { init, logout, api } from '/app.js';
 
-        await auth();
+        await init(true);
         document.getElementById('main').style.display = 'block';
         document.getElementById('logout-btn').addEventListener('click', logout);
 

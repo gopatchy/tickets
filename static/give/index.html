@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCA Give</title>
+    <style>
+        body {
+            font-family: var(--wa-font-sans);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        #main { width: 100%; max-width: 600px; }
+        .event-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            color: inherit;
+        }
+        .event-card img {
+            height: 80px;
+            border-radius: 8px;
+        }
+        .event-info p { margin: 0; opacity: 0.7; }
+    </style>
+</head>
+<body style="opacity: 0">
+    <div id="main">
+        <h2>Events</h2>
+        {{template "event-afac26"}}
+    </div>
+    <script type="module">
+        import { init } from '/app.js';
+
+        await init(false);
+
+        await customElements.whenDefined('wa-card');
+        document.body.style.opacity = 1;
+    </script>
+</body>
+</html>

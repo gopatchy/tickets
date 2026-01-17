@@ -41,14 +41,33 @@ var events = map[string]eventInfo{
 	},
 }
 
+type SiteMode string
+
+const (
+	SiteModeRSVP SiteMode = "rsvp"
+	SiteModeGive SiteMode = "give"
+)
+
 var (
-	templates *template.Template
-	db        *sql.DB
+	modeTemplates = map[SiteMode]*template.Template{}
+	domainModes   = map[string]SiteMode{}
+	db            *sql.DB
 )
 
 func init() {
-	templates = template.Must(template.New("").ParseGlob("static/*.html"))
-	template.Must(templates.ParseGlob("static/*.js"))
+	for _, d := range strings.Split(os.Getenv("GIVE_DOMAINS"), ",") {
+		d = strings.TrimSpace(d)
+		if d != "" {
+			domainModes[d] = SiteModeGive
+		}
+	}
+
+	for _, mode := range []SiteMode{SiteModeRSVP, SiteModeGive} {
+		dir := "static/" + string(mode) + "/"
+		modeTemplates[mode] = template.Must(template.New("").ParseGlob("static/shared/*.html"))
+		template.Must(modeTemplates[mode].ParseGlob(dir + "*.html"))
+		template.Must(modeTemplates[mode].ParseGlob(dir + "*.js"))
+	}
 
 	var err error
 	db, err = sql.Open("postgres", os.Getenv("PGCONN"))
@@ -111,9 +130,12 @@ func handleStatic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := strings.TrimPrefix(path, "/")
+	mode := getSiteMode(r)
+	tmpl := modeTemplates[mode]
+	staticDir := filepath.Join("static", string(mode))
 
 	if strings.HasSuffix(name, ".html") || strings.HasSuffix(name, ".js") {
-		t := templates.Lookup(name)
+		t := tmpl.Lookup(name)
 		if t == nil {
 			http.NotFound(w, r)
 			return
@@ -128,7 +150,7 @@ func handleStatic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !strings.Contains(name, ".") {
-		t := templates.Lookup(name + ".html")
+		t := tmpl.Lookup(name + ".html")
 		if t != nil {
 			w.Header().Set("Content-Type", "text/html")
 			t.Execute(w, templateData())
@@ -136,7 +158,7 @@ func handleStatic(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.ServeFile(w, r, filepath.Join("static", name))
+	http.ServeFile(w, r, filepath.Join(staticDir, name))
 }
 
 func templateData() map[string]any {
@@ -153,6 +175,17 @@ func envMap() map[string]string {
 		}
 	}
 	return m
+}
+
+func getSiteMode(r *http.Request) SiteMode {
+	host := r.Host
+	if idx := strings.Index(host, ":"); idx != -1 {
+		host = host[:idx]
+	}
+	if mode, ok := domainModes[host]; ok {
+		return mode
+	}
+	return SiteModeRSVP
 }
 
 func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {

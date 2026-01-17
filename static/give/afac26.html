@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate - Applause for a Cause</title>
+    <style>
+        body {
+            font-family: var(--wa-font-sans);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        #main { width: 100%; max-width: 600px; }
+        .event-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .event-header img {
+            height: 120px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .event-header p {
+            margin: 0.25rem 0;
+            opacity: 0.7;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .donation-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .donation-group wa-button::part(base) {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .donation-group wa-button[data-value="custom"]::part(base) {
+            flex-direction: column;
+        }
+        .donation-group wa-input {
+            width: 80px;
+            margin-top: 0.4rem;
+            --wa-focus-ring-width: 0;
+            --wa-input-border-width: 0;
+            --wa-input-focus-ring-color: transparent;
+            --wa-input-border-color: transparent;
+            --wa-input-border-color-focus: transparent;
+        }
+        wa-input[type="number"]::part(input) {
+            -moz-appearance: textfield;
+            text-align: center;
+        }
+        .donation-group wa-input::part(base) {
+            border: none;
+            box-shadow: none;
+            outline: none;
+        }
+        .donation-group wa-input::part(base):focus-within {
+            border: none;
+            box-shadow: none;
+            outline: none;
+        }
+        wa-input[type="number"]::part(input)::-webkit-inner-spin-button,
+        wa-input[type="number"]::part(input)::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        wa-button.selected::part(base) {
+            background-color: #FEDE02;
+            color: #000;
+        }
+        .donation-section {
+            margin-top: 1rem;
+        }
+        .thank-you {
+            background: var(--wa-color-success-95);
+            color: var(--wa-color-success-30);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .wa-dark .thank-you {
+            background: var(--wa-color-success-20);
+            color: var(--wa-color-success-90);
+        }
+        .info-box {
+            background: var(--wa-color-neutral-95);
+            color: var(--wa-color-neutral-20);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .wa-dark .info-box {
+            background: var(--wa-color-neutral-20);
+            color: var(--wa-color-neutral-90);
+        }
+        .donation-group wa-button {
+            width: calc(50% - 0.25rem);
+        }
+    </style>
+</head>
+<body style="opacity: 0">
+    <div id="main">
+        <div id="thank-you" class="thank-you" style="display: none;"></div>
+        <wa-card>
+            <div class="event-header">
+                <img src="/afac26-logo.png" alt="Applause for a Cause">
+                <p>Saturday, February 7, 2026 · 6:30 PM</p>
+                <p>Helios Gym</p>
+                <p>597 Central Avenue, Sunnyvale, CA 94086</p>
+            </div>
+            <div class="info-box">
+                <p style="margin: 0;">All donations go to <a href="https://svcommunityservices.org/" target="_blank">Sunnyvale Community Services</a>. Thank you for your generosity!</p>
+            </div>
+            <div class="donation-section">
+                <div style="font-weight: bold; margin-bottom: 1rem;">Select a donation amount:</div>
+                <div class="button-group donation-group" id="donation-group">
+                    <wa-button variant="neutral" class="selected" data-value="25">$25</wa-button>
+                    <wa-button variant="neutral" data-value="50">$50</wa-button>
+                    <wa-button variant="neutral" data-value="custom"><span>Other</span><wa-input type="number" size="small" id="custom-amount" min="1" value="100"><span slot="start">$</span></wa-input></wa-button>
+                    <wa-button variant="neutral" data-value="100">$100</wa-button>
+                </div>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <wa-button variant="brand" id="donate-btn">Donate</wa-button>
+                </div>
+            </div>
+        </wa-card>
+    </div>
+    <script type="module">
+        import { api } from '/app.js';
+
+        const eventId = 'afac26';
+
+        const params = new URLSearchParams(location.search);
+        const donatedParam = params.get('donated');
+        if (donatedParam) {
+            const el = document.getElementById('thank-you');
+            el.textContent = `Thank you for your $${parseFloat(donatedParam).toFixed(2)} donation!`;
+            el.style.display = 'block';
+            history.replaceState({}, '', location.pathname);
+        }
+
+        let selectedDonation = 25;
+
+        function setupButtonGroup(groupId, onChange) {
+            const group = document.getElementById(groupId);
+            group.querySelectorAll('wa-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'WA-INPUT') return;
+                    group.querySelectorAll('wa-button').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    onChange(btn.dataset.value);
+                });
+            });
+        }
+
+        setupButtonGroup('donation-group', val => {
+            selectedDonation = val === 'custom' ? 'custom' : parseInt(val);
+        });
+
+        document.getElementById('custom-amount').addEventListener('focus', () => {
+            const group = document.getElementById('donation-group');
+            group.querySelectorAll('wa-button').forEach(b => b.classList.remove('selected'));
+            group.querySelector('wa-button[data-value="custom"]').classList.add('selected');
+            selectedDonation = 'custom';
+        });
+
+        document.getElementById('donate-btn').addEventListener('click', async () => {
+            let donationCents = 0;
+            if (selectedDonation === 'custom') {
+                donationCents = (parseInt(document.getElementById('custom-amount').value) || 0) * 100;
+            } else {
+                donationCents = selectedDonation * 100;
+            }
+
+            if (donationCents <= 0) {
+                alert('Please select a donation amount');
+                return;
+            }
+
+            const data = await api('POST', `/api/donate/${eventId}`, { donationCents });
+            if (data.url) {
+                location.href = data.url;
+            }
+        });
+
+        await customElements.whenDefined('wa-card');
+        document.body.style.opacity = 1;
+    </script>
+</body>
+</html>

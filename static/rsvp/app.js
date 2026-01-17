@@ -46,10 +46,12 @@ export async function api(method, path, body) {
     const opts = {
         method,
         headers: {
-            'Authorization': 'Bearer ' + (profile?.token || ''),
             'Content-Type': 'application/json'
         }
     };
+    if (profile?.token) {
+        opts.headers['Authorization'] = 'Bearer ' + profile.token;
+    }
     if (body !== undefined) {
         opts.body = JSON.stringify(body);
     }
@@ -79,7 +81,11 @@ const googleReady = new Promise((resolve) => {
     document.head.appendChild(script);
 });
 
-export async function auth() {
+export async function init(requireAuth) {
+    if (!requireAuth) {
+        return null;
+    }
+
     let profile = getProfile();
     if (profile) {
         bind(profile);
