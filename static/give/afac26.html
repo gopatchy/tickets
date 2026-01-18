@@ -156,11 +156,12 @@
             group.querySelectorAll('wa-button').forEach(b => b.classList.remove('selected'));
             group.querySelector('wa-button[data-value="custom"]').classList.add('selected');
             selectedDonation = 'custom';
+            const customInput = document.getElementById('custom-amount');
             const amount = parseFloat(amountParam);
             if (amount > 0) {
-                document.getElementById('custom-amount').value = amount % 1 === 0 ? amount : amount.toFixed(2);
+                customInput.value = amount % 1 === 0 ? amount : amount.toFixed(2);
             } else {
-                document.getElementById('custom-amount').value = '';
+                customInput.value = '';
             }
         }
 
@@ -213,7 +214,16 @@
         });
 
         await customElements.whenDefined('wa-card');
+        await customElements.whenDefined('wa-input');
         document.body.style.opacity = 1;
+
+        if (amountParam !== null) {
+            setTimeout(() => {
+                const customInput = document.getElementById('custom-amount');
+                customInput.focus();
+                customInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
     </script>
 </body>
 </html>
